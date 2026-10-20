@@ -1,0 +1,144 @@
+Create a Task
+Creates a new task inside a specified project and returns the newly created task object.
+POST /v1/projects/{project_id}/tasks
+Base URL: https://api.taskflow.example.com
+Authentication: Required (Bearer token)
+Rate limit: 100 requests per minute per user
+
+Description
+Use this endpoint to add a task to a project. The task must have a title and may optionally include a description, an assignee, a due date, and a priority level. The authenticated user must be a member of the project with permission to create tasks (roles: owner, admin, or member; users with the viewer role cannot create tasks).
+If no priority is supplied, the task is created with priority medium. If no assignee_id is supplied, the task is created as unassigned. New tasks always start with the status open.
+
+Request Headers
+Header	Type	Required	Description
+Authorization	string	Yes	Bearer token identifying the user. Format: Bearer <access_token>.
+Content-Type	string	Yes	Must be application/json.
+Accept	string	No	Set to application/json. This is the only supported response format.
+Idempotency-Key	string	No	A unique value (such as a UUID) up to 64 characters. If you retry a request with the same key within 24 hours, the API returns the original response instead of creating a duplicate task.
+
+Path Parameters
+Name	Type	Required	Description
+project_id	string	Yes	The unique ID of the project in which to create the task (e.g., prj_8f3a21c9).
+
+Query Parameters
+Name	Type	Required	Description
+notify_assignee	boolean	No	If true, the assignee receives an email notification about the new task. Defaults to true. Ignored if no assignee is set.
+
+Request Body Parameters
+The body must be a JSON object with the following fields.
+Name	Type	Required	Constraints	Description
+title	string	Yes	1–200 characters; cannot be only whitespace	A short name for the task.
+description	string	No	Up to 5,000 characters	A detailed explanation of the work to be done. Plain text or Markdown.
+assignee_id	string	No	Must be the ID of an existing member of the project	The user responsible for the task. Omit or set to null for an unassigned task.
+due_date	string	No	ISO 8601 date (YYYY-MM-DD); must be today or a future date	The date by which the task should be completed.
+priority	string	No	One of low, medium, high. Default: medium	The importance of the task.
+Fields not listed above are rejected with a 400 error.
+
+Example Request
+POST /v1/projects/prj_8f3a21c9/tasks?notify_assignee=true HTTP/1.1
+Host: api.taskflow.example.com
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+Content-Type: application/json
+Accept: application/json
+Idempotency-Key: 5b1f0c52-3e7a-4d0e-9c1a-2f8a6b7d9e10
+Request body:
+{
+  "title": "Design landing page mockups",
+  "description": "Create three desktop and two mobile mockups for the new product landing page. Share drafts in the #design channel for feedback.",
+  "assignee_id": "usr_4d92b7e1",
+  "due_date": "2026-11-06",
+  "priority": "high"
+}
+cURL equivalent:
+curl -X POST "https://api.taskflow.example.com/v1/projects/prj_8f3a21c9/tasks" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Design landing page mockups",
+    "assignee_id": "usr_4d92b7e1",
+    "due_date": "2026-11-06",
+    "priority": "high"
+  }'
+________________________________________
+Response
+Success: 201 Created
+Returns the full task object. The Location response header contains the URL of the new task (e.g., /v1/projects/prj_8f3a21c9/tasks/tsk_91c04ab7).
+{
+  "id": "tsk_91c04ab7",
+  "project_id": "prj_8f3a21c9",
+  "title": "Design landing page mockups",
+  "description": "Create three desktop and two mobile mockups for the new product landing page. Share drafts in the #design channel for feedback.",
+  "status": "open",
+  "priority": "high",
+  "due_date": "2026-11-06",
+  "assignee": {
+    "id": "usr_4d92b7e1",
+    "name": "Amina Wanjiru",
+    "email": "amina.wanjiru@example.com"
+  },
+  "created_by": {
+    "id": "usr_17ce03aa",
+    "name": "Daniel Otieno"
+  },
+  "created_at": "2026-10-20T09:42:17Z",
+  "updated_at": "2026-10-20T09:42:17Z"
+}
+Response Fields
+Field	Type	Description
+id	string	Unique identifier of the new task.
+project_id	string	ID of the project the task belongs to.
+title	string	The task title.
+description	string or null	The task description, or null if none was provided.
+status	string	Always open for a newly created task.
+priority	string	low, medium, or high.
+due_date	string or null	Due date in YYYY-MM-DD format, or null if none was set.
+assignee	object or null	Basic details of the assigned user, or null if unassigned.
+created_by	object	The user who created the task (the authenticated user).
+created_at	string	UTC timestamp of creation (ISO 8601).
+updated_at	string	UTC timestamp of the last update (ISO 8601). Equal to created_at on creation.
+
+HTTP Response Codes
+Code	Name	When it occurs
+201	Created	The task was created successfully. The response body contains the new task.
+200	OK	Returned only when a request is repeated with an Idempotency-Key already used within 24 hours. The original task is returned and no new task is created.
+400	Bad Request	The request is malformed: the body is not valid JSON, a required field (title) is missing, a field has the wrong data type, priority is not low, medium, or high, due_date is not in YYYY-MM-DD format, or the body contains unrecognized fields.
+401	Unauthorized	The Authorization header is missing, the token is malformed, expired, or has been revoked.
+403	Forbidden	The token is valid, but the user is not a member of the project or has the viewer role and cannot create tasks.
+404	Not Found	No project exists with the given project_id, or the project exists but is not visible to the user.
+409	Conflict	The project is archived and no longer accepts new tasks, or an Idempotency-Key was reused with a different request body.
+415	Unsupported Media Type	The Content-Type header is missing or is not application/json.
+422	Unprocessable Entity	The JSON is well-formed but a value breaks a business rule: assignee_id does not belong to a member of the project, due_date is in the past, title is empty or only whitespace, or a text field exceeds its maximum length.
+429	Too Many Requests	The rate limit (100 requests per minute) has been exceeded. Wait for the number of seconds in the Retry-After header, then retry.
+500	Internal Server Error	An unexpected error occurred on the server. Retry after a short delay; if the problem persists, contact support with the request_id.
+503	Service Unavailable	The service is temporarily down for maintenance or overloaded. Retry later.
+
+Error Response Format
+All errors use the same structure:
+{
+  "error": {
+    "code": "validation_failed",
+    "message": "The request body contains invalid values.",
+    "details": [
+      {
+        "field": "due_date",
+        "issue": "Due date must be today or a future date."
+      },
+      {
+        "field": "assignee_id",
+        "issue": "User usr_9z88x1 is not a member of this project."
+      }
+    ],
+    "request_id": "req_c7a1d5e2f0"
+  }
+}
+Field	Type	Description
+error.code	string	A stable, machine-readable error identifier (e.g., invalid_json, unauthorized, validation_failed).
+error.message	string	A human-readable summary of the problem.
+error.details	array	Optional. Field-level problems, present for 400 and 422 errors.
+error.request_id	string	A unique ID for the request. Include it when contacting support.
+
+Notes
+•	Idempotency: Always send an Idempotency-Key when retrying after a network timeout, to avoid creating duplicate tasks.
+•	Time zones: due_date is a calendar date with no time zone. created_at and updated_at are always in UTC.
+•	Assignee changes: To change an assignee after creation, use PATCH /v1/projects/{project_id}/tasks/{task_id}.
+
