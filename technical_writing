@@ -1,0 +1,123 @@
+USER MANUAL
+Creating and activating a python virtual environment and installing a package
+
+What this procedure achieves
+By the end, you will have an isolated Python workspace (a virtual environment) for one project, so that packages you install for it do not affect other projects or your computer's main Python installation.
+
+Prerequisites
+Before starting, make sure you have all of the following:
+1.	A computer running Windows 10/11, macOS, or Linux.
+2.	Python 3.8 or newer installed. To check, complete Step 2 below. If Python is missing, download it from python.org. On Windows, tick "Add Python to PATH" during installation.
+3.	An internet connection, needed to download the package.
+4.	A terminal application: 
+•	Windows: Command Prompt or PowerShell (search for either in the Start menu)
+•	macOS: Terminal (in Applications → Utilities)
+•	Linux: your distribution's Terminal
+5.	About 50 MB of free disk space.
+6.	Basic terminal knowledge: you should know how to type a command and press Enter. No other experience is needed.
+Note on commands: Lines starting with $ or > show what you type. Do not type the $ or > symbol itself. Where Windows and macOS/Linux differ, both versions are given.
+
+Procedure
+Step 1: Open your terminal
+Open the terminal application listed in the prerequisites for your operating system.
+Expected result: A window opens showing a text prompt, such as C:\Users\YourName> (Windows) or yourname@computer ~ % (macOS/Linux), with a blinking cursor.
+
+Step 2: Check that Python is installed
+Type the following and press Enter:
+•	Windows: python --version
+•	macOS/Linux: python3 --version
+Expected result: The terminal prints a version number such as Python 3.12.1. Any version of 3.8 or higher is acceptable. (If you see "command not found" or "not recognized", see the Troubleshooting note.)
+Remember your command: Throughout this guide, use python if that worked for you in this step, or python3 if that is the one that worked.
+
+Step 3: Create a project folder
+Type the following and press Enter:
+mkdir my_project
+Expected result: The terminal returns to a new empty prompt with no error message. A folder named my_project now exists in your current location.
+
+Step 4: Move into the project folder
+Type the following and press Enter:
+cd my_project
+Expected result: The prompt changes to include my_project (for example, C:\Users\YourName\my_project>), showing you are now working inside that folder.
+
+Step 5: Create the virtual environment
+Type the following and press Enter:
+•	Windows: python -m venv venv
+•	macOS/Linux: python3 -m venv venv
+This tells Python to create a virtual environment in a new folder called venv.
+Expected result: The terminal pauses for a few seconds, then returns to the prompt with no message. This silence means success. A new folder named venv now exists inside my_project.
+
+Step 6: Confirm the venv folder exists
+Type the following and press Enter:
+•	Windows: dir
+•	macOS/Linux: ls
+Expected result: The listing includes an entry named venv.
+
+Step 7: Activate the virtual environment
+Type the command for your system and press Enter:
+•	Windows (Command Prompt): venv\Scripts\activate
+•	Windows (PowerShell): venv\Scripts\Activate.ps1
+•	macOS/Linux: source venv/bin/activate
+Expected result: The prompt now begins with (venv), for example (venv) C:\Users\YourName\my_project>.
+📷 Screenshot 1 (to be inserted here)
+What it should show: A terminal window split visually into two labelled parts. The top half, labelled "Before activation," shows the plain prompt C:\Users\YourName\my_project>. The bottom half, labelled "After activation," shows the same prompt with (venv) at the start. A red rectangle highlights the (venv) prefix, with an arrow and the caption: "This prefix means your virtual environment is active."
+Purpose: Beginners often do not realise the only visible sign of activation is this small prefix, so the screenshot trains them to look for it.
+
+Step 8: Check which Python the environment is using
+Type the following and press Enter:
+•	Windows: where python
+•	macOS/Linux: which python
+Expected result: The first path printed contains my_project and venv, for example C:\Users\YourName\my_project\venv\Scripts\python.exe. This proves you are using the isolated Python, not the system-wide one.
+
+Step 9: Install the requests package
+Type the following and press Enter:
+pip install requests
+Expected result: The terminal prints download and installation messages and ends with a line similar to Successfully installed requests-2.31.0 (the numbers may differ, and other packages may be listed alongside it).
+
+Step 10: Verify the package was installed
+Type the following and press Enter:
+pip list
+Expected result: A table of installed packages appears, and requests is one of the rows.
+
+Step 11: Test the package in Python
+Type the following and press Enter to start Python's interactive mode:
+python
+Expected result: The prompt changes to >>>, and a line showing the Python version appears above it.
+
+Step 12: Import the package
+At the >>> prompt, type the following and press Enter:
+import requests
+Expected result: The prompt returns to >>> with no error message. Silence means the package loaded correctly. (If you see ModuleNotFoundError, see the Troubleshooting note.)
+
+Step 13: Exit Python
+Type the following and press Enter:
+exit()
+Expected result: The prompt returns to (venv) ...> (your normal terminal prompt), showing you have left Python's interactive mode but are still inside the virtual environment.
+
+Step 14: Deactivate the virtual environment
+When you finish working, type the following and press Enter:
+deactivate
+Expected result: The (venv) prefix disappears from the prompt, showing you are back in your normal system environment.
+
+Troubleshooting note: the most common beginner error
+Problem: ModuleNotFoundError: No module named 'requests' (or pip installs the package but Python cannot find it)
+Why it happens: This is almost always caused by forgetting to activate the virtual environment, or by opening a new terminal window and not re-activating it. Activation lasts only for the terminal window where you ran it. Without (venv) in the prompt, pip install puts the package into your system Python, while the code runs somewhere else, or the reverse.
+How to fix it:
+1.	Look at your prompt. If (venv) is missing, the environment is not active.
+2.	Navigate to your project folder: cd my_project
+3.	Re-run the activation command from Step 7.
+4.	Confirm (venv) appears at the start of the prompt.
+5.	Run pip install requests again, then retest.
+Related issue (Windows PowerShell only): If Step 7 shows "running scripts is disabled on this system," run this once, then retry activation:
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+Alternatively, use Command Prompt instead of PowerShell and run venv\Scripts\activate.
+Golden rule: Before installing or running anything, check that (venv) is in your prompt.
+
+Quick reference summary
+Task	Windows	macOS/Linux
+Create environment	python -m venv venv	python3 -m venv venv
+Activate	venv\Scripts\activate	source venv/bin/activate
+Install package	pip install requests	pip install requests
+Deactivate	deactivate	deactivate
+
+Note on the "one action per step" rule: Steps 6, 8, 10, and 12 are verification steps, each containing a single command whose output confirms the previous step worked. Keeping checks as separate steps helps beginners find exactly where something went wrong.
+
